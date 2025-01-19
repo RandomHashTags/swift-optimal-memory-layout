@@ -17,10 +17,10 @@ import swift_optimal_memory_layout
 @declare(
     defaultVisibility: .public,
     [
-        .let(name: "simd", type: SIMD64<UInt8>.self),
-        .let(name: "boolean", type: Bool.self, documentation: ["see if this", "", "works"]),
-        .let(name: "string", type: String.self),
-        .var(name: "integer", type: Int.self)
+        .let(name: "simd", type: .simd64UInt8),
+        .let(name: "boolean", type: .bool, documentation: ["see if this", "", "works"]),
+        .let(name: "string", type: .string),
+        .var(name: "integer", type: .int)
     ]
 )
 struct TestStruct {

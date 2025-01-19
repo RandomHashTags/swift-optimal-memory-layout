@@ -5,7 +5,7 @@
 //  Created by Evan Anderson on 1/18/25.
 //
 
-import Utilities
+@_exported import Utilities
 
 @attached(member, names: arbitrary)
 public macro declare(
