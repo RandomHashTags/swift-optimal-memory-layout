@@ -16,6 +16,7 @@ let package = Package(
         .package(url: "https://github.com/swiftlang/swift-syntax", from: "600.0.1")
     ],
     targets: [
+        .executableTarget(name: "Generate"),
         .target(name: "Utilities"),
         .target(
             name: "swift-optimal-memory-layout",

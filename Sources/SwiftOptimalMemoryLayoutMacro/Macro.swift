@@ -12,6 +12,7 @@ import SwiftDiagnostics
 @main
 struct SwiftOptimalMemoryLayoutMacro : CompilerPlugin {
     let providingMacros:[any Macro.Type] = [
-        Declare.self
+        Declare.self,
+        _Declare.self
     ]
 }

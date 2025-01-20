@@ -11,6 +11,7 @@ import FoundationEssentials
 import Foundation
 #endif
 
+/*
 // MARK: Standard lib
 extension Bool : MemoryLayoutableProtocol {}
 extension Character : MemoryLayoutableProtocol {}
@@ -134,4 +135,4 @@ extension URL : MemoryLayoutableProtocol {}
 extension URLComponents : MemoryLayoutableProtocol {}
 extension URLQueryItem : MemoryLayoutableProtocol {}
 extension UUID : MemoryLayoutableProtocol {}
-#endif
+#endif*/

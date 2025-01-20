@@ -26,7 +26,7 @@ public struct OptimalMemoryLayoutVariable {
         type: MemoryLayoutable,
         documentation: [String] = []
     ) {
-        self.init(visibility: visibility, mutable: mutable, name: name, typeAnnotation: String("\(type.type)".split(separator: ".")[0]), typeMemoryLayout: type.memoryLayout, documentation: documentation)
+        self.init(visibility: visibility, mutable: mutable, name: name, typeAnnotation: String("\(type.protocolType)".split(separator: ".")[0]), typeMemoryLayout: type.memoryLayout, documentation: documentation)
     }
 
     public init(
@@ -46,7 +46,7 @@ public struct OptimalMemoryLayoutVariable {
     }
 
     @inlinable
-    static func layout<T>(for: T.Type) -> (alignment: Int, size: Int, stride: Int) {
+    public static func layout<T>(for: T.Type) -> (alignment: Int, size: Int, stride: Int) {
         return (MemoryLayout<T>.alignment, MemoryLayout<T>.size, MemoryLayout<T>.stride)
     }
 
@@ -69,6 +69,16 @@ extension OptimalMemoryLayoutVariable {
     public static func `var`(
         visibility: VariableVisibility = .internal,
         name: String,
+        typeAnnotation: String,
+        typeMemoryLayout: (alignment: Int, size: Int, stride: Int),
+        documentation: [String] = []
+    ) -> Self {
+        return Self(visibility: visibility, mutable: true, name: name, typeAnnotation: typeAnnotation, typeMemoryLayout: typeMemoryLayout, documentation: documentation)
+    }
+
+    public static func `var`(
+        visibility: VariableVisibility = .internal,
+        name: String,
         type: MemoryLayoutable,
         documentation: [String] = []
     ) -> Self {
@@ -81,7 +91,7 @@ extension OptimalMemoryLayoutVariable {
         visibility: VariableVisibility = .internal,
         name: String,
         typeAnnotation: String,
-        typeMemoryLayout: (Int, Int, Int),
+        typeMemoryLayout: (alignment: Int, size: Int, stride: Int),
         documentation: [String] = []
     ) -> Self {
         return Self(visibility: visibility, mutable: false, name: name, typeAnnotation: typeAnnotation, typeMemoryLayout: typeMemoryLayout, documentation: documentation)

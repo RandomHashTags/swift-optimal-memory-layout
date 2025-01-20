@@ -1,5 +1,5 @@
 //
-//  main.swift
+//  Declare.swift
 //
 //
 //  Created by Evan Anderson on 1/18/25.
@@ -26,9 +26,8 @@ enum Declare : MemberMacro {
                 } else {
                     if let array = labeled.expression.as(ArrayExprSyntax.self)?.elements {
                         for element in array {
-                            if let variable:OptimalMemoryLayoutVariable = parse(element.expression, defaultVisibility: defaultVisibility) {
-                                variables.append(variable)
-                            }
+                            let variable:OptimalMemoryLayoutVariable = parse(element.expression, defaultVisibility: defaultVisibility)
+                            variables.append(variable)
                         }
                     } else {
                         indentation = String(repeating: " ", count: Int(labeled.expression.as(IntegerLiteralExprSyntax.self)!.literal.text)!)
@@ -46,12 +45,12 @@ enum Declare : MemberMacro {
             return DeclSyntax(stringLiteral: $0.description(indentation: indentation))
         })
     }
-    private static func parse(_ expr: ExprSyntax, defaultVisibility: VariableVisibility) -> OptimalMemoryLayoutVariable? {
+    private static func parse(_ expr: ExprSyntax, defaultVisibility: VariableVisibility) -> OptimalMemoryLayoutVariable {
         var visibility:VariableVisibility = defaultVisibility
         var mutable:Bool = false
         var name:String = "a"
         var typeAnnotation:String = "Any?"
-        var layout:(Int, Int, Int)? = nil
+        var layout:(Int, Int, Int)! = nil
         var documentation:[String] = []
         if let function:FunctionCallExprSyntax = expr.as(FunctionCallExprSyntax.self) {
             if let member:String = function.calledExpression.as(MemberAccessExprSyntax.self)?.declName.baseName.text {
@@ -73,11 +72,29 @@ enum Declare : MemberMacro {
                             case "name":
                                 name = argument.expression.as(StringLiteralExprSyntax.self)?.segments.description ?? name
                             case "type":
-                                typeAnnotation = argument.expression.as(MemberAccessExprSyntax.self)!.declName.baseName.text
+                                if let decl:String = argument.expression.as(MemberAccessExprSyntax.self)?.declName.baseName.text, let layoutable:MemoryLayoutable = MemoryLayoutable(rawValue: decl) {
+                                    typeAnnotation = "\(layoutable.protocolType)"
+                                    layout = layoutable.memoryLayout
+                                }
                             case "typeAnnotation":
                                 typeAnnotation = argument.expression.as(StringLiteralExprSyntax.self)!.segments.description
                             case "typeMemoryLayout":
-                                layout = (0, 0, 0) // TOOD: support
+                                var alignment:Int = 0
+                                var size:Int = 0
+                                var stride:Int = 0
+                                if let tuple = argument.expression.as(TupleExprSyntax.self) {
+                                    for (index, element) in tuple.elements.enumerated() {
+                                        if let literal:String = element.expression.as(IntegerLiteralExprSyntax.self)?.literal.text, let int:Int = Int(literal) {
+                                            switch index {
+                                                case 0: alignment = int
+                                                case 1: size = int
+                                                case 2: stride = int
+                                                default: break
+                                            }
+                                        }
+                                    }
+                                }
+                                layout = (alignment, size, stride)
                             case "documentation":
                                 documentation = argument.expression.as(ArrayExprSyntax.self)?.elements.compactMap({ $0.expression.as(StringLiteralExprSyntax.self)?.segments.description }) ?? []
                             default:
@@ -89,10 +106,9 @@ enum Declare : MemberMacro {
                 }
             }
         }
-        if let layout {
-            return OptimalMemoryLayoutVariable(visibility: visibility, mutable: mutable, name: name, typeAnnotation: typeAnnotation, typeMemoryLayout: layout, documentation: documentation)
-        } else {
-            return OptimalMemoryLayoutVariable(visibility: visibility, mutable: mutable, name: name, type: MemoryLayoutable(rawValue: typeAnnotation)!, documentation: documentation)
+        if layout == nil {
+            layout = (2,2,2)
         }
+        return OptimalMemoryLayoutVariable(visibility: visibility, mutable: mutable, name: name, typeAnnotation: typeAnnotation, typeMemoryLayout: layout, documentation: documentation)
     }
 }
