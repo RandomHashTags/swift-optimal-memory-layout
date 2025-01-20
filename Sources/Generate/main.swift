@@ -17,44 +17,46 @@ func get<T>(indirect: Bool = false, _ type: T.Type) -> Value { Value(indirect: i
 func get(indirect: Bool = false, _ annotation: String, parameters: [(String, String)] = []) -> Value { Value(indirect: indirect, annotation, parameters: parameters) }
 
 // MARK: Standard lib
-var supported:[(String, Value)] = [
-    ("bool", get(Bool.self)),
-    ("char", get(Character.self)),
-    ("string", get(String.self)),
-    ("stringIndex", get("String.Index")),
-    ("stringUTF8View", get("String.UTF8View")),
-    ("stringUTF16View", get("String.UTF16View")),
-    ("substring", get(Substring.self)),
-    ("substringUTF8View", get("Substring.UTF8View")),
-    ("substringUTF16View", get("Substring.UTF16View")),
-    ("staticString", get(StaticString.self)),
-    ("unicodeScalar", get("Unicode.Scalar")),
+var supported:[Block] = [
+    Block([
+        ("bool", get(Bool.self)),
+        ("char", get(Character.self)),
+        ("string", get(String.self)),
+        ("stringIndex", get("String.Index")),
+        ("stringUTF8View", get("String.UTF8View")),
+        ("stringUTF16View", get("String.UTF16View")),
+        ("substring", get(Substring.self)),
+        ("substringUTF8View", get("Substring.UTF8View")),
+        ("substringUTF16View", get("Substring.UTF16View")),
+        ("staticString", get(StaticString.self)),
+        ("unicodeScalar", get("Unicode.Scalar")),
 
-    ("continuousClock", get(ContinuousClock.self)),
-    ("continuousClockDuration", get("ContinuousClock.Duration")),
-    ("continuousClockInstant", get("ContinuousClock.Instant")),
-    ("suspendingClock", get(SuspendingClock.self)),
-    ("suspendingClockInstant", get("SuspendingClock.Instant")),
+        ("continuousClock", get(ContinuousClock.self)),
+        ("continuousClockDuration", get("ContinuousClock.Duration")),
+        ("continuousClockInstant", get("ContinuousClock.Instant")),
+        ("suspendingClock", get(SuspendingClock.self)),
+        ("suspendingClockInstant", get("SuspendingClock.Instant")),
 
-    ("staticBigInt", get(StaticBigInt.self)),
-    ("int", get(Int.self)),
-    ("int8", get(Int8.self)),
-    ("int16", get(Int16.self)),
-    ("int32", get(Int32.self)),
-    ("int64", get(Int64.self)),
+        ("staticBigInt", get(StaticBigInt.self)),
+        ("int", get(Int.self)),
+        ("int8", get(Int8.self)),
+        ("int16", get(Int16.self)),
+        ("int32", get(Int32.self)),
+        ("int64", get(Int64.self)),
 
-    ("uint", get(UInt.self)),
-    ("uint8", get(UInt8.self)),
-    ("uint16", get(UInt16.self)),
-    ("uint32", get(UInt32.self)),
-    ("uint64", get(UInt64.self)),
+        ("uint", get(UInt.self)),
+        ("uint8", get(UInt8.self)),
+        ("uint16", get(UInt16.self)),
+        ("uint32", get(UInt32.self)),
+        ("uint64", get(UInt64.self)),
 
-    ("float", get(Float.self)),
-    ("double", get(Double.self))
+        ("float", get(Float.self)),
+        ("double", get(Double.self))
+    ])
 ]
 
 // MARK: Generics
-let generics:[(String, Value)] = [
+let generics:Block = Block([
     ("optional", get(indirect: true, "Optional", parameters: [("value", "MemoryLayoutable")])),
     ("simd2", get(indirect: true, "SIMD2", parameters: [("of", "MemoryLayoutable")])),
     ("simd3", get(indirect: true, "SIMD3", parameters: [("of", "MemoryLayoutable")])),
@@ -103,18 +105,18 @@ let generics:[(String, Value)] = [
     ("strideThroughIterator", get(indirect: true, "StrideThroughIterator", parameters: [("element", "MemoryLayoutable")])),
     ("strideTo", get(indirect: true, "StrideTo", parameters: [("element", "MemoryLayoutable")])),
     ("strideToIterator", get(indirect: true, "StrideToIterator", parameters: [("element", "MemoryLayoutable")])),
-]
-//supported.append(contentsOf: generics)
+])
+//supported.append(generics)
 
 // MARK: Swift >= 6
 #if compiler(>=6.0)
-let swift6:[(String, Value)] = [
+let swift6:Block = Block([
     ("int128", get(Int128.self)),
     ("uint128", get(UInt128.self)),
 
     //("rangeSet", get(indirect: true, "RangeSet", parameters: [("bound", "MemoryLayoutable")]))
-]
-supported.append(contentsOf: swift6)
+], compilerCondition: "if compiler(>=6.0)")
+supported.append(swift6)
 #endif
 
 // MARK: Foundation
@@ -125,7 +127,7 @@ import Foundation
 #endif
 
 #if canImport(FoundationEssentials) || canImport(Foundation)
-let foundation:[(String, Value)] = [
+let foundation:Block = Block([
     ("stringCompareOptions", get("String.CompareOptions")),
     ("stringEncoding", get("String.Encoding")),
     ("attributedString", get(AttributedString.self)),
@@ -154,20 +156,19 @@ let foundation:[(String, Value)] = [
     ("urlComponents", get(URLComponents.self)),
     ("urlQueryItem", get(URLQueryItem.self)),
     ("uuid", get(UUID.self))
-]
-supported.append(contentsOf: foundation)
+], compilerCondition: "if canImport(FoundationEssentials) || canImport(Foundation)")
+supported.append(foundation)
 #endif
 
 var cases:String = ""
 var initialize:String = "extension MemoryLayoutable {\n    public init?<T: StringProtocol>(rawValue: T) {\n        switch rawValue {"
 var types:String = "extension MemoryLayoutable {\n    @inlinable public var protocolType : MemoryLayoutableProtocol.Type {\n        switch self {"
 var extensions:String = ""
-for (caseName, value) in supported {
-    let parameters:String = value.parameters.isEmpty ? "" : "(" + value.parameters.map({ $0.0 + ": " + $0.1 }).joined(separator: ", ") + ")"
-    cases += "\n    " + (value.indirect ? "indirect " : "") + "case " + caseName + parameters
-    initialize += "\n        case \"\(caseName)\": self = .\(caseName)"
-    types += "\n        case .\(caseName): return " + value.annotation + ".self"
-    extensions += "\nextension " + value.annotation + " : MemoryLayoutableProtocol {}"
+for block in supported {
+    cases += block.cases()
+    initialize += block.initialize()
+    types += block.types()
+    extensions += block.extensions()
 }
 types += "\n        }\n    }\n}"
 initialize += "\n        default: return nil"
@@ -204,7 +205,7 @@ struct Block {
     }
 
     private func result(_ input: String) -> String {
-        var string:String = compilerCondition
+        var string:String = compilerCondition.isEmpty ? "" : "\n#" + compilerCondition
         string += input
         if !compilerCondition.isEmpty {
             string += "\n#endif\n"
@@ -221,9 +222,20 @@ struct Block {
         return result(string)
     }
 
+    func initialize() -> String {
+        var string:String = ""
+        for (caseName, _) in values {
+            string += "\n        case \"\(caseName)\": self = .\(caseName)"
+        }
+        return result(string)
+    }
+
     func types() -> String {
         var string:String = ""
-        return string
+        for (caseName, value) in values {
+            string += "\n        case .\(caseName): return " + value.annotation + ".self"
+        }
+        return result(string)
     }
 
     func extensions() -> String {
@@ -232,15 +244,5 @@ struct Block {
             string += "\nextension " + value.annotation + " : MemoryLayoutableProtocol {}"
         }
         return result(string)
-    }
-
-    func stepForward(_ input: Int) -> Int {
-        return input + 1
-    }
-    func stepBackward(_ input: Int) -> Int {
-        return input - 1
-    }
-    func chooseStepFunction(backward: Bool) -> (Int) -> Int {
-        return backward ? stepBackward : stepForward
     }
 }
