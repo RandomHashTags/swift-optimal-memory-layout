@@ -17,7 +17,7 @@ import swift_optimal_memory_layout
 @declare(
     defaultVisibility: .public,
     [
-        //.let(name: "simd", type: .simd64UInt8),
+        .let(name: "simd", typeAnnotation: "SIMD64<UInt8>", typeMemoryLayout: (16, 64, 64)),
         .let(name: "boolean", type: .bool, documentation: ["see if this", "", "works"]),
         .let(name: "string", type: .string),
         .var(name: "integer", type: .int)
@@ -26,11 +26,10 @@ import swift_optimal_memory_layout
 struct TestStruct {
 
     init() {
-        //simd = .init()
+        simd = .init()
         boolean = false
         string = ""
         integer = 0
-        print("\(MemoryLayout<Self>.alignment),\(MemoryLayout<Self>.size),\(MemoryLayout<Self>.stride)")
     }
 
     func doThing() {

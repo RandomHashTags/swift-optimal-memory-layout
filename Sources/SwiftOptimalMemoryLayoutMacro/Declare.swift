@@ -12,7 +12,7 @@ import Utilities
 
 enum Declare : MemberMacro {
     static func expansion(of node: AttributeSyntax, providingMembersOf declaration: some DeclGroupSyntax, conformingTo protocols: [TypeSyntax], in context: some MacroExpansionContext) throws -> [DeclSyntax] {
-        guard let arguments = node.arguments?.children(viewMode: .all) else { return [] }
+        guard let arguments:SyntaxChildren = node.arguments?.children(viewMode: .all) else { return [] }
         var variables:[OptimalMemoryLayoutVariable] = []
         var defaultVisibility:VariableVisibility = .internal
         var indentation:String = String(repeating: " ", count: 4)
@@ -24,7 +24,7 @@ enum Declare : MemberMacro {
                         default: break
                     }
                 } else {
-                    if let array = labeled.expression.as(ArrayExprSyntax.self)?.elements {
+                    if let array:ArrayElementListSyntax = labeled.expression.as(ArrayExprSyntax.self)?.elements {
                         for element in array {
                             let variable:OptimalMemoryLayoutVariable = parse(element.expression, defaultVisibility: defaultVisibility)
                             variables.append(variable)
