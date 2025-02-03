@@ -72,9 +72,15 @@ enum Declare : MemberMacro {
                             case "name":
                                 name = argument.expression.as(StringLiteralExprSyntax.self)?.segments.description ?? name
                             case "type":
-                                if let decl:String = argument.expression.as(MemberAccessExprSyntax.self)?.declName.baseName.text, let layoutable:MemoryLayoutable = MemoryLayoutable(rawValue: decl) {
-                                    typeAnnotation = "\(layoutable.protocolType)"
-                                    layout = layoutable.memoryLayout
+                                if var decl:String = argument.expression.as(MemberAccessExprSyntax.self)?.declName.baseName.text
+                                        ?? argument.expression.as(FunctionCallExprSyntax.self)?.description {
+                                    if decl.first == "." {
+                                        decl.removeFirst()
+                                    }
+                                    if let layoutable:MemoryLayoutable = MemoryLayoutable(rawValue: decl) {
+                                        typeAnnotation = layoutable.typeAnnotation
+                                        layout = layoutable.memoryLayout
+                                    }
                                 }
                             case "typeAnnotation":
                                 typeAnnotation = argument.expression.as(StringLiteralExprSyntax.self)!.segments.description

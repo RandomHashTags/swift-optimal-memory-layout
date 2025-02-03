@@ -11,6 +11,7 @@ import FoundationEssentials
 import Foundation
 #endif
 
+// MARK: MemoryLayoutable
 public enum MemoryLayoutable {
     case bool
     case char
@@ -46,6 +47,8 @@ public enum MemoryLayoutable {
     case uint128
 #endif
 
+    case enumRawRepresentable(String)
+
 #if canImport(FoundationEssentials) || canImport(Foundation)
     case stringCompareOptions
     case stringEncoding
@@ -80,9 +83,11 @@ public enum MemoryLayoutable {
     @inlinable public var memoryLayout : (alignment: Int, size: Int, stride: Int) { protocolType.memoryLayout }
 }
 
+// MARK: Init
 extension MemoryLayoutable {
     public init?<T: StringProtocol>(rawValue: T) {
-        switch rawValue {
+        let values:[T.SubSequence] = rawValue.split(separator: "(")
+        switch values[0] {
         case "bool": self = .bool
         case "char": self = .char
         case "string": self = .string
@@ -116,6 +121,9 @@ extension MemoryLayoutable {
         case "int128": self = .int128
         case "uint128": self = .uint128
 #endif
+        case "enumRawRepresentable":
+            let value:T.SubSequence = values[1].split(separator: "\"")[0]
+            self = .enumRawRepresentable(String(value))
 
 #if canImport(FoundationEssentials) || canImport(Foundation)
         case "stringCompareOptions": self = .stringCompareOptions
@@ -152,8 +160,10 @@ extension MemoryLayoutable {
     }
 }
 
+// MARK: Protocol Type
 extension MemoryLayoutable {
-    @inlinable public var protocolType : MemoryLayoutableProtocol.Type {
+    @inlinable
+    public var protocolType : MemoryLayoutableProtocol.Type {
         switch self {
         case .bool: return Bool.self
         case .char: return Character.self
@@ -188,6 +198,7 @@ extension MemoryLayoutable {
         case .int128: return Int128.self
         case .uint128: return UInt128.self
 #endif
+        case .enumRawRepresentable: return Bool.self
 
 #if canImport(FoundationEssentials) || canImport(Foundation)
         case .stringCompareOptions: return String.CompareOptions.self
@@ -223,7 +234,18 @@ extension MemoryLayoutable {
     }
 }
 
+// MARK: Type Annotation
+extension MemoryLayoutable {
+    @inlinable
+    public var typeAnnotation : String {
+        switch self {
+        case .enumRawRepresentable(let s): return s
+        default: return "\(protocolType)"
+        }
+    }
+}
 
+// MARK: Conformances
 extension Bool : MemoryLayoutableProtocol {}
 extension Character : MemoryLayoutableProtocol {}
 extension String : MemoryLayoutableProtocol {}

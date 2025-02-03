@@ -8,7 +8,7 @@
 @_exported import Utilities
 
 @attached(member, names: arbitrary)
-public macro declare(
+public macro OptimalMemoryLayout(
     defaultVisibility: VariableVisibility = .internal,
     _ variables: [OptimalMemoryLayoutVariable]
 ) = #externalMacro(module: "SwiftOptimalMemoryLayoutMacro", type: "Declare")
